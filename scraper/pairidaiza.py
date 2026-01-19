@@ -6,13 +6,6 @@ import pytz
 BASE_URL = "https://www.pairidaiza.eu"
 news_items = []
 
-
-import requests
-from bs4 import BeautifulSoup
-from feedgen.feed import FeedGenerator
-from datetime import datetime
-import pytz
-
 BASE_URL = "https://www.pairidaiza.eu"
 NEWS_URL = f"{BASE_URL}/nieuws"
 
