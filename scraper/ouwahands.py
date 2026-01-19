@@ -33,7 +33,8 @@ def scrape_ouwahands():
                 "title": title,
                 "link": link,
                 "description": description,
-                "pubDate": dt
+                "pubDate": dt,
+                "soruce": "Ouwehands Dierenpark"
             })
         except Exception as e:
             print(f"[Ouwehands] Parse error: {e}")
