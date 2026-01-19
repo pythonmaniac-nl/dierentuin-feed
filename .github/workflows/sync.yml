@@ -2,7 +2,7 @@ name: Update Dierentuin Feed
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/30 * * * *"  # elke 30 minuten
   workflow_dispatch:
 
 jobs:
@@ -10,34 +10,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Checkout de repo
     - uses: actions/checkout@v3
 
+    # Setup Python
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.11"
 
+    # Installeer dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install requests beautifulsoup4 feedgen
 
+    # Run scrapers
     - name: Run scrapers
       run: |
         python scraper/ouwahands.py
-        # Voeg hier andere scrapers toe, bv:
+        # Voeg andere scrapers toe, bv:
         # python scraper/burgerszoo.py
         # python scraper/artis.py
 
+    # Genereer feed
     - name: Generate Feed
       run: python feed/generate_feed.py
 
+    # Commit & push feed.xml veilig
     - name: Commit Feed
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
         git add feed/feed.xml
-        git diff-index --quiet HEAD || git commit -m "Update feed"
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        git commit -m "Update feed" || echo "No changes"
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
