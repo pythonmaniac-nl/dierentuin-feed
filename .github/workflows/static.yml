@@ -35,16 +35,6 @@ jobs:
       - name: Run scrapers
         run: |
           python scraper/ouwahands.py
-          python scraper/burgerszoo.py
-          python scraper/dierenparkamersfoort.py
-          python scraper/wildlands.py
-          python scraper/artis.py
-          python scraper/diergaardeblijdorp.py
-          python scraper/zooparc.py
-          python scraper/eindhovenzoo.py
-          python scraper/aquazoo.py
-          python scraper/beeksebergen.py
-          python scraper/pairidaiza.py
 
       # 5️⃣ Genereer feed
       - name: Generate Feed
