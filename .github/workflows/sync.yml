@@ -2,7 +2,7 @@ name: Update Dierentuin Feed
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # draait elke 30 minuten
+    - cron: "*/30 * * * *"  # elke 30 min
   workflow_dispatch:
 
 jobs:
@@ -25,9 +25,7 @@ jobs:
     - name: Run scrapers
       run: |
         python scraper/ouwahands.py
-        # Voeg hier andere scrapers toe, bv:
-        # python scraper/burgerszoo.py
-        # python scraper/artis.py
+        # Voeg andere scrapers toe
 
     - name: Generate Feed
       run: python feed/generate_feed.py
