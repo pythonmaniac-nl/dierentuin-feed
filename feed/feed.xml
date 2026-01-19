@@ -1,1 +1,8 @@
-
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+  <title>Dierentuin Nieuws NL + Pairi Daiza</title>
+  <link>https://pythonmaniac-nl.github.io/dierentuin-feed/feed.xml</link>
+  <description>Test feed</description>
+</channel>
+</rss>
