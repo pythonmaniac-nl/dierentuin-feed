@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.getcwd())
+
 from feedgen.feed import FeedGenerator
 from scraper.ouwahands import scrape_ouwahands
 from scraper.burgerszoo import scrape_burgerszoo
