@@ -1,8 +1,2 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0">
-<channel>
-  <title>Dierentuin Nieuws NL + Pairi Daiza</title>
-  <link>https://pythonmaniac-nl.github.io/dierentuin-feed/feed.xml</link>
-  <description>Test feed</description>
-</channel>
-</rss>
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Dierentuin Nieuws NL + Pairi Daiza</title><link>https://pythonmaniac-nl.github.io/dierentuin-feed/feed.xml</link><description>Kort nieuws van alle geselecteerde dierentuinen</description><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><language>nl</language><lastBuildDate>Mon, 19 Jan 2026 10:29:36 +0000</lastBuildDate></channel></rss>
