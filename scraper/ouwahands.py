@@ -1,39 +1,38 @@
 import requests
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
-import os
 from datetime import datetime
 import pytz
+import os
 
+# --- Config ---
 BASE_URL = "https://ouwehand.nl"
 NEWS_URL = f"{BASE_URL}/nieuws"
 FEED_DIR = "feed"
 FEED_FILE = os.path.join(FEED_DIR, "feed.xml")
 
-# Maak feed map aan als die niet bestaat
+# Maak map aan als die nog niet bestaat
 os.makedirs(FEED_DIR, exist_ok=True)
 
-# Haal de nieuws pagina
+# --- Scraper ---
+print("Starting Ouwehands scraper...")
 response = requests.get(NEWS_URL)
 if response.status_code != 200:
     print(f"Error fetching {NEWS_URL}: {response.status_code}")
     exit(1)
 
 soup = BeautifulSoup(response.text, "html.parser")
-
-# Selecteer alle nieuwsitems
 items = soup.select("a.news-post")
 print(f"Found {len(items)} news items")
 
-# Maak een feed
+# --- Feed setup ---
 fg = FeedGenerator()
-fg.title("Ouwehands Nieuws")
-fg.link(href=BASE_URL)
-fg.description("Automatisch bijgewerkte feed van Ouwehands Dierenpark")
+fg.title("Dierentuin Nieuws NL + Pairi Daiza")
+fg.link(href="https://pythonmaniac-nl.github.io/dierentuin-feed/feed.xml")
+fg.description("Kort nieuws van alle geselecteerde dierentuinen")
+fg.language("nl")
 
-from datetime import datetime
-import pytz
-
+# --- Voeg items toe ---
 for item in items:
     try:
         link = item["href"]
@@ -43,23 +42,22 @@ for item in items:
         date_str = item.select_one("time.date").get_text(strip=True)
         description_tag = item.select_one("p.desc")
         description = description_tag.get_text(strip=True) if description_tag else ""
-        
+
         # Parse datum en voeg timezone toe
         dt = datetime.strptime(date_str, "%d-%m-%Y")
         dt = dt.replace(tzinfo=pytz.UTC)
-        
-        # Debug output
-        print(f"{date_str} | {title} | {link}")
-        
-        # Voeg item toe aan feed
+
+        # Voeg toe aan feed
         fe = fg.add_entry()
         fe.title(title)
         fe.link(href=link)
-        fe.pubDate(dt)
         fe.description(description)
+        fe.pubDate(dt)
+
+        print(f"Added to feed: {title}")
     except Exception as e:
         print(f"Error parsing item: {e}")
 
-# Schrijf de feed naar file
+# --- Schrijf feed.xml ---
 fg.rss_file(FEED_FILE)
 print(f"Feed written to {FEED_FILE}")
