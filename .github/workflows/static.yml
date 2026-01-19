@@ -33,6 +33,12 @@ jobs:
           pip install --upgrade pip
           pip install requests beautifulsoup4 feedgen pytz lxml
 
+      # install playwright
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
       # 5️⃣ Generate combined feed
       - name: Generate Feed
         run: python feed/generate_feed.py
