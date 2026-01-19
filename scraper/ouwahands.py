@@ -1,45 +1,56 @@
 import requests
 from bs4 import BeautifulSoup
-import json
-from datetime import datetime
+from feedgen.feed import FeedGenerator
 import os
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), "../data/items.json")
+BASE_URL = "https://ouwehand.nl"
+NEWS_URL = f"{BASE_URL}/nieuws"
+FEED_DIR = "feed"
+FEED_FILE = os.path.join(FEED_DIR, "feed.xml")
 
-def fetch_news():
-    url = "https://ouwehand.nl/nieuws"
-    r = requests.get(url)
-    soup = BeautifulSoup(r.text, "html.parser")
-    articles = []
+# Maak feed map aan als die niet bestaat
+os.makedirs(FEED_DIR, exist_ok=True)
 
-    for item in soup.select(".news-item")[:5]:
-        title = item.select_one(".title").get_text(strip=True)
-        link = item.select_one("a")["href"]
-        date_str = item.select_one(".date").get_text(strip=True)
-        date = datetime.strptime(date_str, "%d-%m-%Y")
-        summary = item.select_one(".summary").get_text(strip=True)
+# Haal de nieuws pagina
+response = requests.get(NEWS_URL)
+if response.status_code != 200:
+    print(f"Error fetching {NEWS_URL}: {response.status_code}")
+    exit(1)
 
-        articles.append({
-            "title": title,
-            "link": link,
-            "date": date.isoformat(),
-            "summary": summary,
-            "source": "Ouwehands Dierenpark"
-        })
+soup = BeautifulSoup(response.text, "html.parser")
 
-    return articles
+# Selecteer alle nieuwsitems
+items = soup.select("a.news-post")
+print(f"Found {len(items)} news items")
 
-if __name__ == "__main__":
-    articles = fetch_news()
+# Maak een feed
+fg = FeedGenerator()
+fg.title("Ouwehands Nieuws")
+fg.link(href=BASE_URL)
+fg.description("Automatisch bijgewerkte feed van Ouwehands Dierenpark")
+
+for item in items:
     try:
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-    except:
-        data = []
+        link = item["href"]
+        if not link.startswith("http"):
+            link = BASE_URL + link
+        title = item.select_one("h2.title").get_text(strip=True)
+        date = item.select_one("time.date").get_text(strip=True)
+        description_tag = item.select_one("p.desc")
+        description = description_tag.get_text(strip=True) if description_tag else ""
+        
+        # Print debug info
+        print(f"{date} | {title} | {link}")
+        
+        # Voeg item toe aan feed
+        fe = fg.add_entry()
+        fe.title(title)
+        fe.link(href=link)
+        fe.pubDate(date)
+        fe.description(description)
+    except Exception as e:
+        print(f"Error parsing item: {e}")
 
-    data.extend(articles)
-    seen = set()
-    data = [x for x in data if not (x['link'] in seen or seen.add(x['link']))]
-
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+# Schrijf de feed naar file
+fg.rss_file(FEED_FILE)
+print(f"Feed written to {FEED_FILE}")
