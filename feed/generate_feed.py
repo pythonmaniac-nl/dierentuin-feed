@@ -14,7 +14,7 @@ feed.language("nl")
 # 🔽 haal op
 items = []
 items += scrape_ouwahands()
-items += scrape_burgers()
+items += scrape_burgerszoo()
 
 # 🔽 sorteer op datum nieuw → oud
 items = sorted(items, key=lambda x: x["pubDate"], reverse=True)
