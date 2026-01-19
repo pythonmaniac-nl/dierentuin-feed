@@ -35,10 +35,10 @@ jobs:
     - name: Generate Feed
       run: python feed/generate_feed.py
       
-     - name: Commit & Push feed
-       env:
-        PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-       run: |
+    - name: Commit & Push feed
+      env:
+       PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      run: |
         git config --global user.email "actions@github.com"
         git config --global user.name "GitHub Actions"
         git add feed/feed.xml || true
