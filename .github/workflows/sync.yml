@@ -10,38 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout de repo
     - uses: actions/checkout@v3
 
-    # Setup Python
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.11"
 
-    # Installeer dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install requests beautifulsoup4 feedgen
 
-    # Run scrapers
     - name: Run scrapers
       run: |
         python scraper/ouwahands.py
-        # Voeg andere scrapers toe, bv:
-        # python scraper/burgerszoo.py
-        # python scraper/artis.py
+        # voeg hier andere scrapers toe
 
-    # Genereer feed
     - name: Generate Feed
       run: python feed/generate_feed.py
 
-    # Commit & push feed.xml veilig
-    - name: Commit Feed
+    - name: Commit & Push feed
+      env:
+        PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
         git add feed/feed.xml
-        git commit -m "Update feed" || echo "No changes"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+        git commit -m "Update feed" || echo "No changes to commit"
+        git push https://$PAT_TOKEN@github.com/${{ github.repository }} HEAD:main
