@@ -9,7 +9,7 @@ locale.setlocale(locale.LC_TIME, "nl_NL.UTF-8")
 BASE_URL = "https://www.burgerszoo.nl"
 NEWS_URL = f"{BASE_URL}/nieuws"
 
-def scrape_burgers():
+def scrape_burgerszoo():
     response = requests.get(NEWS_URL)
     soup = BeautifulSoup(response.text, "html.parser")
 
