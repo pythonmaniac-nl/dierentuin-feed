@@ -31,16 +31,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 feedgen pytz
 
-      # 4️⃣ Run scrapers (pas aan per dierentuin)
-      - name: Run scrapers
-        run: |
-          python scraper/ouwahands.py
+      # 4️⃣ Run scraper
+      - name: Run ouwahands scraper
+        run: python scraper/ouwahands.py
 
-      # 5️⃣ Genereer feed
+      # 5️⃣ Generate feed (optioneel als scraper dit al doet)
       - name: Generate Feed
-        run: python feed/generate_feed.py
+        run: python feed/generate_feed.py || echo "No separate feed generation needed"
 
-      # 6️⃣ Commit & push feed.xml via PAT
+      # 6️⃣ Debug feed content
+      - name: Show feed content
+        run: cat feed/feed.xml
+
+      # 7️⃣ Commit & push feed.xml via PAT
       - name: Commit & Push feed.xml
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -51,28 +54,17 @@ jobs:
           git commit -m "Update feed from workflow" || git commit --allow-empty -m "Force update feed"
           git push https://$PAT_TOKEN@github.com/${{ github.repository }} HEAD:main
 
-      # 7️⃣ Setup GitHub Pages
+      # 8️⃣ Setup GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # 8️⃣ Upload feed/ map als Pages artifact
+      # 9️⃣ Upload feed/ map als Pages artifact
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'feed'   # feed.xml wordt hieruit gepubliceerd
+          path: 'feed'
 
-      - name: Run ouwahands scraper
-        run: |
-          echo "Starting ouwahands.py scraper..."
-          python scraper/ouwahands.py || echo "Scraper failed but continuing"
-
-      - name: Show feed content
-        run: cat feed/feed.xml
-
-      # 9️⃣ Deploy Pages
+      # 🔟 Deploy Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Run ouwahands scraper
-        run: python scraper/ouwahands.py
