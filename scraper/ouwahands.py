@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
 import os
+from datetime import datetime
+import pytz
 
 BASE_URL = "https://ouwehand.nl"
 NEWS_URL = f"{BASE_URL}/nieuws"
@@ -29,24 +31,31 @@ fg.title("Ouwehands Nieuws")
 fg.link(href=BASE_URL)
 fg.description("Automatisch bijgewerkte feed van Ouwehands Dierenpark")
 
+from datetime import datetime
+import pytz
+
 for item in items:
     try:
         link = item["href"]
         if not link.startswith("http"):
             link = BASE_URL + link
         title = item.select_one("h2.title").get_text(strip=True)
-        date = item.select_one("time.date").get_text(strip=True)
+        date_str = item.select_one("time.date").get_text(strip=True)
         description_tag = item.select_one("p.desc")
         description = description_tag.get_text(strip=True) if description_tag else ""
         
-        # Print debug info
-        print(f"{date} | {title} | {link}")
+        # Parse datum en voeg timezone toe
+        dt = datetime.strptime(date_str, "%d-%m-%Y")
+        dt = dt.replace(tzinfo=pytz.UTC)
+        
+        # Debug output
+        print(f"{date_str} | {title} | {link}")
         
         # Voeg item toe aan feed
         fe = fg.add_entry()
         fe.title(title)
         fe.link(href=link)
-        fe.pubDate(date)
+        fe.pubDate(dt)
         fe.description(description)
     except Exception as e:
         print(f"Error parsing item: {e}")
