@@ -42,23 +42,23 @@ def scrape_burgerszoo():
             description = desc_tag.get_text(strip=True) if desc_tag else ""
 
             # Datum
+            dt = None
             date_tag = item.select_one("p.card-date")
-if date_tag:
-    date_str = date_tag.get_text(strip=True)
-    if date_str:  # ← check of string niet leeg is
-        try:
-            d, m, y = date_str.split()
-            dt = datetime(int(y), MONTHS[m.lower()], int(d), tzinfo=pytz.UTC)
-        except Exception as e:
-            print(f"[BURGERS] Date parse error '{date_str}': {e}")
-            dt = datetime.now(pytz.UTC)  # fallback
-    else:
-        # lege string
-        dt = datetime.now(pytz.UTC)
-else:
-    dt = datetime.now(pytz.UTC)  # geen date tag
+            if date_tag:
+                date_str = date_tag.get_text(strip=True)
+                if date_str:
+                    try:
+                        d, m, y = date_str.split()
+                        dt = datetime(int(y), MONTHS[m.lower()], int(d), tzinfo=pytz.UTC)
+                    except Exception as e:
+                        print(f"[BURGERS] Date parse error '{date_str}': {e}")
+                        dt = datetime.now(pytz.UTC)  # fallback
+                else:
+                    dt = datetime.now(pytz.UTC)  # lege string fallback
+            else:
+                dt = datetime.now(pytz.UTC)  # geen date tag fallback
 
-            # Toevoegen aan lijst
+            # Voeg toe aan items
             news_items.append({
                 "title": title,
                 "link": link,
