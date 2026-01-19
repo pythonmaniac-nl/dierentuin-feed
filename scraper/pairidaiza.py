@@ -43,7 +43,7 @@ def scrape_pairidaiza():
         resp = requests.get(link)
         if resp.status_code == 200:
             article_soup = BeautifulSoup(resp.text, "html.parser")
-            intro_tag = article_soup.select_one("div.article-intro, div.intro, p")  # pas selector aan op echte structuur
+            intro_tag = article_soup.select_one("div.t-intro")  # pas selector aan op echte structuur
             if intro_tag:
                 description = intro_tag.get_text(strip=True)
         if not description:
