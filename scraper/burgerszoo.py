@@ -18,9 +18,6 @@ MONTHS = {
     "december": 12,
 }
 
-d, m, y = date_str.split()
-dt = datetime(int(y), MONTHS[m.lower()], int(d), tzinfo=pytz.UTC)
-
 BASE_URL = "https://www.burgerszoo.nl"
 NEWS_URL = f"{BASE_URL}/nieuws"
 
@@ -40,6 +37,9 @@ def scrape_burgerszoo():
 
             title = item.select_one("h2.card-title").get_text(strip=True)
 
+            d, m, y = date_str.split()
+            dt = datetime(int(y), MONTHS[m.lower()], int(d), tzinfo=pytz.UTC)
+           
             desc = item.select_one("p.card-text")
             description = desc.get_text(strip=True) if desc else ""
 
