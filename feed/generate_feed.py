@@ -4,6 +4,7 @@ sys.path.append(os.getcwd())
 from feedgen.feed import FeedGenerator
 from scraper.ouwahands import scrape_ouwahands
 from scraper.burgerszoo import scrape_burgerszoo
+from scraper.pairidaiza import scrape_pairidaiza
 
 feed = FeedGenerator()
 feed.title("Dierentuin Nieuws NL + Pairi Daiza")
@@ -15,6 +16,7 @@ feed.language("nl")
 items = []
 items += scrape_ouwahands()
 items += scrape_burgerszoo()
+items += scrape_pairidaiza()
 
 # 🔽 sorteer op datum nieuw → oud
 items = sorted(items, key=lambda x: x["pubDate"], reverse=True)
