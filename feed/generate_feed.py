@@ -26,6 +26,7 @@ for item in items:
     entry = feed.add_entry()
     entry.title(f"{item['source']}: {item['title']}")
     entry.link(href=item["link"])
+    entry.guid(item["link"], permalink=True)
     entry.description(item["description"])
     entry.pubDate(item["pubDate"])
 
