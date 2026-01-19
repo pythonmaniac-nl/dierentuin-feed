@@ -66,6 +66,9 @@ jobs:
           echo "Starting ouwahands.py scraper..."
           python scraper/ouwahands.py || echo "Scraper failed but continuing"
 
+      - name: Show feed content
+        run: cat feed/feed.xml
+
       # 9️⃣ Deploy Pages
       - name: Deploy to GitHub Pages
         id: deployment
