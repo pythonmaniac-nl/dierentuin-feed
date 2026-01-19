@@ -63,7 +63,8 @@ def scrape_burgerszoo():
                 "title": title,
                 "link": link,
                 "description": description,
-                "pubDate": dt
+                "pubDate": dt,
+                "source": "Burgers Zoo"
             })
 
             print(f"[BURGERS] {dt.strftime('%d-%m-%Y')} | {title}")
