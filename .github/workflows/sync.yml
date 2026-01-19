@@ -2,7 +2,7 @@ name: Update Dierentuin Feed
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # elke 30 min
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -25,7 +25,9 @@ jobs:
     - name: Run scrapers
       run: |
         python scraper/ouwahands.py
-        # Voeg andere scrapers toe
+        # Voeg hier andere scrapers toe, bv:
+        # python scraper/burgerszoo.py
+        # python scraper/artis.py
 
     - name: Generate Feed
       run: python feed/generate_feed.py
@@ -35,5 +37,7 @@ jobs:
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
         git add feed/feed.xml
-        git commit -m "Update feed" || echo "No changes"
+        git diff-index --quiet HEAD || git commit -m "Update feed"
         git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
