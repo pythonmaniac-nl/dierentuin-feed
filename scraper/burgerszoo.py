@@ -3,57 +3,69 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import pytz
 
-MONTHS = {
-    "januari": 1,
-    "februari": 2,
-    "maart": 3,
-    "april": 4,
-    "mei": 5,
-    "juni": 6,
-    "juli": 7,
-    "augustus": 8,
-    "september": 9,
-    "oktober": 10,
-    "november": 11,
-    "december": 12,
-}
-
 BASE_URL = "https://www.burgerszoo.nl"
 NEWS_URL = f"{BASE_URL}/nieuws"
 
+# Maanden mapping voor Nederlandse datums
+MONTHS = {
+    "januari": 1, "februari": 2, "maart": 3, "april": 4,
+    "mei": 5, "juni": 6, "juli": 7, "augustus": 8,
+    "september": 9, "oktober": 10, "november": 11, "december": 12,
+}
+
 def scrape_burgerszoo():
-    response = requests.get(NEWS_URL)
+    news_items = []
+
+    try:
+        response = requests.get(NEWS_URL)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"[BURGERS] Error fetching news page: {e}")
+        return news_items
+
     soup = BeautifulSoup(response.text, "html.parser")
-
     items = soup.select("a.block-news-item")
-    print(f"[Burgers] Found {len(items)} items")
 
-    results = []
     for item in items:
         try:
-            link = item["href"]
-            if not link.startswith("http"):
+            # Link
+            link = item.get("href")
+            if link and not link.startswith("http"):
                 link = BASE_URL + link
 
-            title = item.select_one("h2.card-title").get_text(strip=True)
+            # Titel
+            title_tag = item.select_one("h2.card-title")
+            title = title_tag.get_text(strip=True) if title_tag else "Geen titel"
 
-            d, m, y = date_str.split()
-            dt = datetime(int(y), MONTHS[m.lower()], int(d), tzinfo=pytz.UTC)
-           
-            desc = item.select_one("p.card-text")
-            description = desc.get_text(strip=True) if desc else ""
+            # Beschrijving
+            desc_tag = item.select_one("p.card-text")
+            description = desc_tag.get_text(strip=True) if desc_tag else ""
 
-            date_str = item.select_one("p.card-date").get_text(strip=True)
-            dt = datetime.strptime(date_str, "%d %B %Y").replace(tzinfo=pytz.UTC)
+            # Datum
+            date_tag = item.select_one("p.card-date")
+            if date_tag:
+                date_str = date_tag.get_text(strip=True)
+                try:
+                    d, m, y = date_str.split()
+                    dt = datetime(int(y), MONTHS[m.lower()], int(d), tzinfo=pytz.UTC)
+                except Exception as e:
+                    print(f"[BURGERS] Date parse error '{date_str}': {e}")
+                    dt = datetime.now(pytz.UTC)  # fallback
+            else:
+                dt = datetime.now(pytz.UTC)  # fallback als datum ontbreekt
 
-            results.append({
-                "source": "Burgers Zoo",
+            # Toevoegen aan lijst
+            news_items.append({
                 "title": title,
                 "link": link,
                 "description": description,
                 "pubDate": dt
             })
-        except Exception as e:
-            print(f"[Burgers] Parse error: {e}")
 
-    return results
+            print(f"[BURGERS] {dt.strftime('%d-%m-%Y')} | {title}")
+
+        except Exception as e:
+            print(f"[BURGERS] Parse error: {e}")
+
+    print(f"[BURGERS] Total items found: {len(news_items)}")
+    return news_items
