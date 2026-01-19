@@ -1,6 +1,6 @@
 from feedgen.feed import FeedGenerator
 from scraper.ouwahands import scrape_ouwahands
-from scraper.burgers import scrape_burgers
+from scraper.burgerszoo import scrape_burgers
 
 feed = FeedGenerator()
 feed.title("Dierentuin Nieuws NL + Pairi Daiza")
