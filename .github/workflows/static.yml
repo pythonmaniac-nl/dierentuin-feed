@@ -1,0 +1,78 @@
+name: Update Feed & Deploy to GitHub Pages
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # Elke 30 minuten
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 feedgen
+
+      # 4️⃣ Run scrapers (pas aan per dierentuin)
+      - name: Run scrapers
+        run: |
+          python scraper/ouwahands.py
+          python scraper/burgerszoo.py
+          python scraper/dierenparkamersfoort.py
+          python scraper/wildlands.py
+          python scraper/artis.py
+          python scraper/diergaardeblijdorp.py
+          python scraper/zooparc.py
+          python scraper/eindhovenzoo.py
+          python scraper/aquazoo.py
+          python scraper/beeksebergen.py
+          python scraper/pairidaiza.py
+
+      # 5️⃣ Genereer feed
+      - name: Generate Feed
+        run: python feed/generate_feed.py
+
+      # 6️⃣ Commit & push feed.xml via PAT
+      - name: Commit & Push feed.xml
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add feed/feed.xml || true
+          git diff --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Update feed from workflow"
+          git push https://$PAT_TOKEN@github.com/${{ github.repository }} HEAD:main
+
+      # 7️⃣ Setup GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # 8️⃣ Upload feed/ map als Pages artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'feed'   # feed.xml wordt hieruit gepubliceerd
+
+      # 9️⃣ Deploy Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
