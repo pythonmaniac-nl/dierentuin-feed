@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Voeg repo root toe zodat scraper module gevonden wordt
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from feedgen.feed import FeedGenerator
 from scraper.ouwahands import scrape_ouwahands
 from scraper.burgerszoo import scrape_burgerszoo
