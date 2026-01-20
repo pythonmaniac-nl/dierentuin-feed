@@ -1,81 +1,74 @@
-# scraper/pairidaiza.py
-
-from playwright.sync_api import sync_playwright
+import requests
 from datetime import datetime
-import pytz
+from urllib.parse import urljoin
 
-BASE_URL = "https://www.pairidaiza.eu"
-NEWS_URL = f"{BASE_URL}/nl/news"
+BASE_URL = "https://www.pairidaiza.eu/nl/news"
 
 def scrape_pairidaiza():
-    news_items = []
+    items = []
+    try:
+        resp = requests.get(BASE_URL, timeout=10)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"[PAIRIDAIZA] Error fetching page: {e}")
+        return items
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+    soup = BeautifulSoup(resp.text, "lxml")
+    cards = soup.select(".card-news-inner.has-video, .card-news-inner.has-text")  # general selector
+    print(f"[PAIRIDAIZA] Found {len(cards)} items")
 
-        print("[PAIRIDAIZA] Loading page...")
-        page.goto(NEWS_URL, timeout=60000)
+    for card in cards:
+        try:
+            # Title
+            title_tag = card.select_one("h3.card-news__content__title-inner")
+            if not title_tag:
+                continue
+            title = title_tag.get_text(strip=True)
 
-        # infinite scroll / lazy load
-        last_height = 0
-        scroll_rounds = 0
+            # URL
+            link_tag = card.select_one("a.btn")
+            url = urljoin(BASE_URL, link_tag["href"]) if link_tag and link_tag.get("href") else None
 
-        while scroll_rounds < 20:  # failsafe
-            scroll_rounds += 1
-            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            page.wait_for_timeout(800)
-            new_height = page.evaluate("document.body.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
+            # Date
+            date_tag = card.select_one("span.t-label")
+            pubDate = None
+            if date_tag:
+                try:
+                    pubDate = datetime.strptime(date_tag.get_text(strip=True), "%d.%m.%Y")
+                except:
+                    pubDate = None
 
-        print(f"[PAIRIDAIZA] Scroll completed in {scroll_rounds} rounds")
+            # Thumbnail
+            img_tag = card.select_one("img")
+            thumbnail = None
+            if img_tag:
+                if img_tag.has_attr("srcset"):
+                    parts = [p.split()[0] for p in img_tag["srcset"].split(",")]
+                    thumbnail = urljoin(BASE_URL, parts[-1])
+                elif img_tag.has_attr("src"):
+                    thumbnail = urljoin(BASE_URL, img_tag["src"])
 
-        cards = page.query_selector_all(".card-news-inner")
-        print(f"[PAIRIDAIZA] Found {len(cards)} cards")
+            # Description: intro + first p from detail
+            desc_tag = card.select_one(".card-news__content__copy")
+            description = desc_tag.get_text(" ", strip=True) if desc_tag else ""
+            if url and not description:
+                try:
+                    detail_resp = requests.get(url, timeout=10)
+                    detail_soup = BeautifulSoup(detail_resp.text, "lxml")
+                    p = detail_soup.select_one("p")
+                    description = p.get_text(strip=True) if p else ""
+                except:
+                    description = ""
 
-        for card in cards:
-            try:
-                date_tag = card.query_selector(".t-label")
-                title_tag = card.query_selector("h3.card-news__content__title-inner")
-                link_tag = card.query_selector("a.btn")
+            items.append({
+                "source": "Pairi Daiza",
+                "title": title,
+                "url": url,
+                "description": description,
+                "thumbnail": thumbnail,
+                "pubDate": pubDate
+            })
 
-                if not (date_tag and title_tag and link_tag):
-                    continue
-
-                date_raw = date_tag.inner_text().strip()
-                title = title_tag.inner_text().strip()
-                link = link_tag.get_attribute("href")
-
-                if not link.startswith("http"):
-                    link = BASE_URL + link
-
-                # Parse date dd.mm.yyyy -> datetime
-                dt = datetime.strptime(date_raw, "%d.%m.%Y").replace(tzinfo=pytz.UTC)
-
-                # Description fallback
-                desc = card.query_selector("p")
-                description = desc.inner_text().strip() if desc else ""
-
-                if not description:
-                    category = card.query_selector(".label")
-                    description = category.inner_text().strip() if category else ""
-
-                print(f"[PAIRIDAIZA] {date_raw} | {title}")
-
-                news_items.append({
-                    "source": "Pairi Daiza",
-                    "title": title,
-                    "link": link,
-                    "description": description,
-                    "pubDate": dt
-                })
-
-            except Exception as e:
-                print(f"[PAIRIDAIZA] Parse error: {e}")
-
-        browser.close()
-
-    print(f"[PAIRIDAIZA] Total items found: {len(news_items)}")
-    return news_items
+        except Exception as e:
+            print(f"[PAIRIDAIZA] Parse error: {e}")
+    return items
