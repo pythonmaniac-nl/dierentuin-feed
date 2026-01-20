@@ -39,9 +39,11 @@ jobs:
           pip install playwright
           playwright install --with-deps chromium
 
-      # 5️⃣ Generate combined feed
+      # Generate combined feed
       - name: Generate Feed
-        run: python feed/generate_feed.py
+        run: |
+          cd $GITHUB_WORKSPACE
+          python feed/generate_feed.py
 
       # 6️⃣ Commit & Push updated feed.xml
       - name: Commit Feed
