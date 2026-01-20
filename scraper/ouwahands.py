@@ -1,42 +1,56 @@
 import requests
 from bs4 import BeautifulSoup
-from feedgen.feed import FeedGenerator
 from datetime import datetime
 import pytz
+from urllib.parse import urljoin
 
 BASE_URL = "https://ouwehand.nl"
-NEWS_URL = f"{BASE_URL}/nieuws"
+NEWS_URL = f"{BASE_URL}/nl/nieuws"
 
 def scrape_ouwahands():
-    response = requests.get(NEWS_URL)
-    soup = BeautifulSoup(response.text, "html.parser")
+    items = []
+    try:
+        resp = requests.get(NEWS_URL, timeout=10)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"[OUWEHANDS] Error fetching page: {e}")
+        return items
 
-    items = soup.select("a.news-post")
-    print(f"[Ouwehands] Found {len(items)} items")
+    soup = BeautifulSoup(resp.text, "lxml")
+    news_posts = soup.select("a.news-post")
+    print(f"[OUWEHANDS] Found {len(news_posts)} items")
 
-    results = []
-    for item in items:
+    for post in news_posts:
         try:
-            link = item["href"]
+            title = post.select_one("h2.title").get_text(strip=True)
+            link = post.get("href")
             if not link.startswith("http"):
-                link = BASE_URL + link
+                link = urljoin(BASE_URL, link)
 
-            title = item.select_one("h2.title").get_text(strip=True)
-            date_str = item.select_one("time.date").get_text(strip=True)
-            desc = item.select_one("p.desc")
-            description = desc.get_text(strip=True) if desc else ""
+            date_tag = post.select_one("time.date")
+            pubDate = None
+            if date_tag:
+                dt = datetime.strptime(date_tag.get_text(strip=True), "%d-%m-%Y")
+                pubDate = dt.replace(tzinfo=pytz.UTC)
 
-            dt = datetime.strptime(date_str, "%d-%m-%Y").replace(tzinfo=pytz.UTC)
+            desc_tag = post.select_one("p.desc")
+            description = desc_tag.get_text(strip=True) if desc_tag else ""
 
-            results.append({
+            # Thumbnail
+            img_tag = post.select_one("p.flex-img img")
+            thumbnail = None
+            if img_tag and img_tag.get("src"):
+                thumbnail = urljoin(BASE_URL, img_tag["src"])
+
+            items.append({
                 "source": "Ouwehands",
                 "title": title,
-                "link": link,
+                "url": link,
                 "description": description,
-                "pubDate": dt,
-                "soruce": "Ouwehands Dierenpark"
+                "thumbnail": thumbnail,
+                "pubDate": pubDate
             })
+            print(f"[OUWEHANDS] Added to feed: {title}")
         except Exception as e:
-            print(f"[Ouwehands] Parse error: {e}")
-
-    return results
+            print(f"[OUWEHANDS] Parse error: {e}")
+    return items
