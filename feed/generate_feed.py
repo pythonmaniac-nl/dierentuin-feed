@@ -1,36 +1,49 @@
-import sys, os
-sys.path.append(os.getcwd())
-
 from feedgen.feed import FeedGenerator
 from scraper.ouwahands import scrape_ouwahands
 from scraper.burgerszoo import scrape_burgerszoo
 from scraper.pairidaiza import scrape_pairidaiza
+import os
 
-feed = FeedGenerator()
-feed.title("Dierentuin Nieuws NL + Pairi Daiza")
-feed.link(href="https://pythonmaniac-nl.github.io/dierentuin-feed/feed.xml")
-feed.description("Kort nieuws van alle geselecteerde dierentuinen")
-feed.language("nl")
+FEED_DIR = "feed"
+FEED_FILE = os.path.join(FEED_DIR, "feed.xml")
+os.makedirs(FEED_DIR, exist_ok=True)
 
-# 🔽 haal op
-items = []
-items += scrape_ouwahands()
-items += scrape_burgerszoo()
-items += scrape_pairidaiza()
+# Scrape all parks
+all_items = []
+for scraper in [scrape_ouwahands, scrape_burgerszoo, scrape_pairidaiza]:
+    try:
+        scraped = scraper()
+        all_items.extend(scraped)
+    except Exception as e:
+        print(f"[FEED] Scraper failed: {e}")
 
-# 🔽 sorteer op datum nieuw → oud
-items = sorted(items, key=lambda x: x["pubDate"], reverse=True)
+# Remove items without URL or date
+all_items = [i for i in all_items if i.get("url") and i.get("pubDate")]
 
-print(f"Total combined items: {len(items)}")
+# Sort by date descending
+all_items.sort(key=lambda x: x["pubDate"], reverse=True)
 
-# 🔽 voeg toe aan feed.xml
-for item in items:
-    entry = feed.add_entry()
-    entry.title(f"{item['source']}: {item['title']}")
-    entry.link(href=item["link"])
-    entry.guid(item["link"], permalink=True)
-    entry.description(item["description"])
-    entry.pubDate(item["pubDate"])
+# Generate feed
+fg = FeedGenerator()
+fg.title("Dierentuin Nieuws NL + Pairi Daiza")
+fg.link(href="https://pythonmaniac-nl.github.io/dierentuin-feed/feed/feed.xml")
+fg.description("Kort nieuws van alle geselecteerde dierentuinen")
+fg.language("nl")
 
-feed.rss_file("feed/feed.xml")
-print("Feed written: feed/feed.xml")
+for item in all_items:
+    fe = fg.add_entry()
+    fe.title(f"{item['source']}: {item['title']}")
+    fe.link(href=item["url"])
+    fe.pubDate(item["pubDate"])
+    # Inline image + media:content
+    content = ""
+    if item.get("thumbnail"):
+        content += f'<p><img src="{item["thumbnail"]}" style="max-width:800px;height:auto;"></p>'
+        fe.enclosure(item["thumbnail"], 0, "image/jpeg")
+    if item.get("description"):
+        content += f"<p>{item['description']}</p>"
+    fe.content(content, type="CDATA")
+
+# Write feed
+fg.rss_file(FEED_FILE)
+print(f"[FEED] Feed written: {FEED_FILE} | Total items: {len(all_items)}")
