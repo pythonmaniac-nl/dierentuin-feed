@@ -20,37 +20,37 @@ def scrape_burgerszoo():
 
     for card in cards:
         try:
-            title_tag = card.select_one("h3.card-news__content__title-inner")
-            if not title_tag:
+            title = card.select_one("h3.card-news__content__title-inner")
+            if not title:
                 continue
-            title = title_tag.get_text(strip=True)
+            title = title.get_text(strip=True)
 
-            link_tag = card.select_one("a.btn")
-            if not link_tag or not link_tag.get("href"):
+            btn = card.select_one("a.btn")
+            if not btn or not btn.get("href"):
                 continue
-            url = urljoin(BASE_URL, link_tag["href"])
+            url = urljoin(BASE_URL, btn["href"])
 
             date_tag = card.select_one("span.t-label")
             pubDate = None
             if date_tag:
+                dt = date_tag.get_text(strip=True)
                 try:
-                    pubDate = datetime.strptime(date_tag.get_text(strip=True), "%d.%m.%Y")
+                    pubDate = datetime.strptime(dt, "%d.%m.%Y")
                 except:
                     pubDate = None
 
-            img_tag = card.select_one("img")
+            img = card.select_one("img")
             thumbnail = None
-            if img_tag:
-                if img_tag.has_attr("srcset"):
-                    parts = [p.split()[0] for p in img_tag["srcset"].split(",")]
+            if img:
+                if img.has_attr("srcset"):
+                    parts = [p.split()[0] for p in img["srcset"].split(",")]
                     thumbnail = urljoin(BASE_URL, parts[-1])
-                elif img_tag.has_attr("src"):
-                    thumbnail = urljoin(BASE_URL, img_tag["src"])
+                elif img.has_attr("src"):
+                    thumbnail = urljoin(BASE_URL, img["src"])
 
-            intro_tag = card.select_one(".card-news__content__copy")
-            description = intro_tag.get_text(" ", strip=True) if intro_tag else ""
+            intro = card.select_one(".card-news__content__copy")
+            description = intro.get_text(" ", strip=True) if intro else ""
 
-            # Fallback: fetch detail page for description if missing
             if not description:
                 try:
                     detail_resp = requests.get(url, timeout=10)
@@ -70,4 +70,5 @@ def scrape_burgerszoo():
             })
         except Exception as e:
             print(f"[BURGERS] Parse error: {e}")
+
     return items
