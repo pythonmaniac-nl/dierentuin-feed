@@ -40,6 +40,11 @@ jobs:
           pip install playwright
           playwright install --with-deps chromium
 
+      - name: Configure Python module path
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE"
+          echo "PYTHONPATH set to $PYTHONPATH"
+
       # Generate combined feed
       - name: Generate Feed
         run: |
