@@ -36,11 +36,19 @@ jobs:
           pip install requests beautifulsoup4 feedgen pytz lxml
 
       # install playwright
+      - name: Cache Playwright
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.local/share/pyplaywright
+          key: playwright-${{ runner.os }}
+
       - name: Install Playwright
         run: |
           pip install playwright
           playwright install --with-deps chromium
-
+      
       - name: Configure Python module path
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE"
