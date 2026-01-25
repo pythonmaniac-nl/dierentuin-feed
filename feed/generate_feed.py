@@ -1,4 +1,8 @@
 import sys, os
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, ROOT)
+
 from feedgen.feed import FeedGenerator
 from scraper.ouwahands import scrape_ouwahands
 from scraper.burgerszoo import scrape_burgerszoo
